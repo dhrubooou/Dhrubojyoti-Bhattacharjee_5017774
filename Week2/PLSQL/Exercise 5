@@ -1,0 +1,57 @@
+Scenario 1: Automatically Update the Last Modified Date
+Ans:
+      CREATE OR REPLACE TRIGGER UpdateCustomerLastModified
+      BEFORE UPDATE ON Customers
+      FOR EACH ROW
+      BEGIN
+          :NEW.LastModified := SYSDATE;
+      END UpdateCustomerLastModified;
+      /
+Scenario 2: Maintain an Audit Log for All Transactions
+Ans:
+      CREATE OR REPLACE TRIGGER LogTransaction
+      AFTER INSERT ON Transactions
+      FOR EACH ROW
+      BEGIN
+          INSERT INTO AuditLog (
+              transaction_id, 
+              account_id, 
+              transaction_date, 
+              transaction_type, 
+              amount, 
+              created_at
+          ) VALUES (
+              :NEW.transaction_id, 
+              :NEW.account_id, 
+              :NEW.transaction_date, 
+              :NEW.transaction_type, 
+              :NEW.amount, 
+              SYSDATE
+          );
+      END LogTransaction;
+      /
+Scenario 3: Enforce Business Rules on Deposits and Withdrawals
+Ans:
+      CREATE OR REPLACE TRIGGER CheckTransactionRules
+      BEFORE INSERT ON Transactions
+      FOR EACH ROW
+      DECLARE
+          v_balance NUMBER;
+      BEGIN
+          -- Check if the amount is positive for deposits
+          IF :NEW.transaction_type = 'DEPOSIT' AND :NEW.amount <= 0 THEN
+              RAISE_APPLICATION_ERROR(-20001, 'Deposit amount must be positive.');
+          END IF;
+      
+          -- Check if the balance is sufficient for withdrawals
+          IF :NEW.transaction_type = 'WITHDRAWAL' THEN
+              SELECT balance INTO v_balance
+              FROM accounts
+              WHERE account_id = :NEW.account_id;
+      
+              IF v_balance < :NEW.amount THEN
+                  RAISE_APPLICATION_ERROR(-20002, 'Insufficient balance for withdrawal.');
+              END IF;
+          END IF;
+      END CheckTransactionRules;
+      /
