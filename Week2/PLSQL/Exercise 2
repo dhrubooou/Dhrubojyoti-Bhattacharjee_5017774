@@ -1,0 +1,105 @@
+Scenario 1: Handle Exceptions During Fund Transfers Between Accounts
+Ans : 
+        CREATE OR REPLACE PROCEDURE SafeTransferFunds(
+            p_from_account_id IN NUMBER,
+            p_to_account_id IN NUMBER,
+            p_amount IN NUMBER
+        ) IS
+            insufficient_funds EXCEPTION;
+            account_not_found EXCEPTION;
+        BEGIN
+            -- Check if the from account has sufficient funds
+            DECLARE
+                v_balance NUMBER;
+            BEGIN
+                SELECT balance INTO v_balance
+                FROM accounts
+                WHERE account_id = p_from_account_id
+                FOR UPDATE;
+                
+                IF v_balance < p_amount THEN
+                    RAISE insufficient_funds;
+                END IF;
+            EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                    RAISE account_not_found;
+            END;
+            
+            -- Proceed with the transfer
+            UPDATE accounts
+            SET balance = balance - p_amount
+            WHERE account_id = p_from_account_id;
+            
+            UPDATE accounts
+            SET balance = balance + p_amount
+            WHERE account_id = p_to_account_id;
+            
+            COMMIT;
+            
+        EXCEPTION
+            WHEN insufficient_funds THEN
+                ROLLBACK;
+                DBMS_OUTPUT.PUT_LINE('Error: Insufficient funds in account ' || p_from_account_id);
+            WHEN account_not_found THEN
+                ROLLBACK;
+                DBMS_OUTPUT.PUT_LINE('Error: Account not found');
+            WHEN OTHERS THEN
+                ROLLBACK;
+                DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+        END SafeTransferFunds;
+        /
+
+
+Scenario 2: Manage Errors When Updating Employee Salaries
+Ans:
+      CREATE OR REPLACE PROCEDURE UpdateSalary(
+          p_employee_id IN NUMBER,
+          p_percentage IN NUMBER
+      ) IS
+          employee_not_found EXCEPTION;
+      BEGIN
+          -- Attempt to update the salary
+          UPDATE employees
+          SET salary = salary * (1 + p_percentage / 100)
+          WHERE employee_id = p_employee_id;
+          
+          IF SQL%NOTFOUND THEN
+              RAISE employee_not_found;
+          END IF;
+          
+          COMMIT;
+          
+      EXCEPTION
+          WHEN employee_not_found THEN
+              DBMS_OUTPUT.PUT_LINE('Error: Employee ID ' || p_employee_id || ' not found.');
+          WHEN OTHERS THEN
+              DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+      END UpdateSalary;
+      /
+
+
+Scenario 3: Ensure Data Integrity When Adding a New Customer
+Ans:
+
+        CREATE OR REPLACE PROCEDURE AddNewCustomer(
+            p_customer_id IN NUMBER,
+            p_customer_name IN VARCHAR2,
+            p_balance IN NUMBER
+        ) IS
+            customer_exists EXCEPTION;
+        BEGIN
+            -- Attempt to insert a new customer
+            INSERT INTO customers (customer_id, customer_name, balance)
+            VALUES (p_customer_id, p_customer_name, p_balance);
+            
+            COMMIT;
+            
+        EXCEPTION
+            WHEN DUP_VAL_ON_INDEX THEN
+                DBMS_OUTPUT.PUT_LINE('Error: Customer ID ' || p_customer_id || ' already exists.');
+            WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+        END AddNewCustomer;
+        /
+
+
