@@ -1,0 +1,53 @@
+Scenario 1: Process Monthly Interest for Savings Accounts
+Ans :
+
+        CREATE OR REPLACE PROCEDURE ProcessMonthlyInterest
+        IS
+        BEGIN
+            UPDATE SavingsAccounts
+            SET balance = balance * 1.01;
+        END ProcessMonthlyInterest;
+        /
+Scenario 2: Implement a Bonus Scheme for Employees
+Ans :
+        CREATE OR REPLACE PROCEDURE UpdateEmployeeBonus (
+            p_department_id IN Employees.department_id%TYPE,
+            p_bonus_percentage IN NUMBER
+        )
+        IS
+        BEGIN
+            UPDATE Employees
+            SET salary = salary + (salary * p_bonus_percentage / 100)
+            WHERE department_id = p_department_id;
+        END UpdateEmployeeBonus;
+        /
+Scenario 3: Transfer Funds Between Accounts
+Ans:
+        CREATE OR REPLACE PROCEDURE TransferFunds (
+            p_source_account_id IN Accounts.account_id%TYPE,
+            p_target_account_id IN Accounts.account_id%TYPE,
+            p_amount IN NUMBER
+        )
+        IS
+            v_source_balance NUMBER;
+        BEGIN
+            -- Check if the source account has sufficient balance
+            SELECT balance INTO v_source_balance
+            FROM Accounts
+            WHERE account_id = p_source_account_id;
+        
+            IF v_source_balance < p_amount THEN
+                RAISE_APPLICATION_ERROR(-20001, 'Insufficient balance in source account.');
+            ELSE
+                -- Deduct the amount from the source account
+                UPDATE Accounts
+                SET balance = balance - p_amount
+                WHERE account_id = p_source_account_id;
+        
+                -- Add the amount to the target account
+                UPDATE Accounts
+                SET balance = balance + p_amount
+                WHERE account_id = p_target_account_id;
+            END IF;
+        END TransferFunds;
+        /
