@@ -1,0 +1,39 @@
+Scenario 1: Apply a Discount to Loan Interest Rates for Customers Above 60 Years Old
+Ans: 
+      BEGIN
+          FOR customer_rec IN (SELECT customer_id, age FROM customers) LOOP
+              IF customer_rec.age > 60 THEN
+                  UPDATE loans
+                  SET interest_rate = interest_rate - 1
+                  WHERE customer_id = customer_rec.customer_id;
+              END IF;
+          END LOOP;
+          COMMIT;
+      END;
+      /
+
+Scenario 2: Promote Customers to VIP Status Based on Their Balance
+Ans:
+      BEGIN
+          FOR customer_rec IN (SELECT customer_id, balance FROM customers) LOOP
+              IF customer_rec.balance > 10000 THEN
+                  UPDATE customers
+                  SET IsVIP = 'TRUE'
+                  WHERE customer_id = customer_rec.customer_id;
+              END IF;
+          END LOOP;
+          COMMIT;
+      END;
+      /
+
+Scenario 3: Send Reminders to Customers Whose Loans Are Due Within the Next 30 Days
+Ans:
+      BEGIN
+          FOR loan_rec IN (SELECT customer_id, loan_id, due_date 
+                           FROM loans 
+                           WHERE due_date BETWEEN SYSDATE AND SYSDATE + 30) LOOP
+              DBMS_OUTPUT.PUT_LINE('Reminder: Loan ' || loan_rec.loan_id || ' for customer ' || loan_rec.customer_id || ' is due on ' || TO_CHAR(loan_rec.due_date, 'YYYY-MM-DD'));
+          END LOOP;
+      END;
+      /
+
