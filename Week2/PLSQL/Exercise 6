@@ -1,0 +1,74 @@
+Scenario 1: Generate Monthly Statements for All Customers
+Ans:
+        DECLARE
+            CURSOR transactions_cursor IS
+                SELECT customer_id, transaction_id, transaction_date, amount
+                FROM Transactions
+                WHERE transaction_date BETWEEN TRUNC(SYSDATE, 'MM') AND LAST_DAY(SYSDATE);
+        
+            v_customer_id Transactions.customer_id%TYPE;
+            v_transaction_id Transactions.transaction_id%TYPE;
+            v_transaction_date Transactions.transaction_date%TYPE;
+            v_amount Transactions.amount%TYPE;
+        BEGIN
+            OPEN transactions_cursor;
+            LOOP
+                FETCH transactions_cursor INTO v_customer_id, v_transaction_id, v_transaction_date, v_amount;
+                EXIT WHEN transactions_cursor%NOTFOUND;
+                DBMS_OUTPUT.PUT_LINE('Customer ID: ' || v_customer_id || ', Transaction ID: ' || v_transaction_id ||
+                                     ', Date: ' || v_transaction_date || ', Amount: ' || v_amount);
+            END LOOP;
+            CLOSE transactions_cursor;
+        END;
+        /
+Scenario 2: Apply Annual Fee to All Accounts
+Ans:
+        DECLARE
+            CURSOR accounts_cursor IS
+                SELECT account_id, balance
+                FROM Accounts;
+        
+            v_account_id Accounts.account_id%TYPE;
+            v_balance Accounts.balance%TYPE;
+            v_annual_fee CONSTANT NUMBER := 50; -- Example annual fee amount
+        BEGIN
+            OPEN accounts_cursor;
+            LOOP
+                FETCH accounts_cursor INTO v_account_id, v_balance;
+                EXIT WHEN accounts_cursor%NOTFOUND;
+                UPDATE Accounts
+                SET balance = balance - v_annual_fee
+                WHERE account_id = v_account_id;
+                DBMS_OUTPUT.PUT_LINE('Annual fee applied to Account ID: ' || v_account_id);
+            END LOOP;
+            CLOSE accounts_cursor;
+        END;
+        /
+Scenario 3: Update Interest Rates for All Loans
+Ans:
+        DECLARE
+            CURSOR loans_cursor IS
+                SELECT loan_id, interest_rate
+                FROM Loans;
+        
+            v_loan_id Loans.loan_id%TYPE;
+            v_interest_rate Loans.interest_rate%TYPE;
+            v_new_interest_rate Loans.interest_rate%TYPE;
+        BEGIN
+            OPEN loans_cursor;
+            LOOP
+                FETCH loans_cursor INTO v_loan_id, v_interest_rate;
+                EXIT WHEN loans_cursor%NOTFOUND;
+                
+                -- Example policy: increase interest rate by 0.5%
+                v_new_interest_rate := v_interest_rate + 0.5;
+                
+                UPDATE Loans
+                SET interest_rate = v_new_interest_rate
+                WHERE loan_id = v_loan_id;
+                
+                DBMS_OUTPUT.PUT_LINE('Updated Loan ID: ' || v_loan_id || ' to new interest rate: ' || v_new_interest_rate);
+            END LOOP;
+            CLOSE loans_cursor;
+        END;
+        /
